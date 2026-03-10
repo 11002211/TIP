@@ -3,22 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bio-Master Pro | Tıbbi İşletim Sistemi</title>
+    <title>Bio-Master Pro | Advanced Medical Visualizer</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;500&family=Outfit:wght@300;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;500&family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
     <style>
         :root {
             --bg-dark: #02040a;
-            --panel-bg: rgba(10, 14, 23, 0.95);
+            --panel-bg: rgba(10, 14, 23, 0.98);
             --accent-cyan: #00f2ff;
             --accent-pink: #ff007f;
             --glass-border: rgba(0, 242, 255, 0.15);
             --text-main: #e2e8f0;
+            --text-dim: #94a3b8;
+            --highlight: rgba(0, 242, 255, 0.1);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        
         body { 
             background: var(--bg-dark); 
             color: var(--text-main); 
@@ -26,497 +29,289 @@
             height: 100vh;
             overflow: hidden;
             display: grid;
-            grid-template-columns: 320px 1fr 380px;
+            grid-template-columns: 320px 1fr 380px; /* Üç sütunlu profesyonel layout */
         }
 
-        /* --- ANA PANEL STİLLERİ --- */
-        .panel {
+        /* --- SOL KONTROL PANELİ --- */
+        #sidebar-left {
             background: var(--panel-bg);
-            border: 1px solid var(--glass-border);
-            backdrop-filter: blur(10px);
-            margin: 15px;
-            border-radius: 20px;
+            border-right: 1px solid var(--glass-border);
             display: flex;
             flex-direction: column;
-            padding: 25px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            padding: 30px 20px;
+            z-index: 10;
         }
 
-        /* Sol Kontrol Paneli */
-        #control-panel { grid-column: 1; }
+        .brand h2 { font-weight: 800; letter-spacing: 1px; margin-bottom: 5px; }
+        .brand span { color: var(--accent-pink); }
+        .version-tag { font-family: 'JetBrains Mono'; font-size: 10px; color: var(--text-dim); margin-bottom: 40px; }
+
+        .control-group { margin-bottom: 25px; background: var(--highlight); padding: 15px; border-radius: 12px; border: 1px solid var(--glass-border); }
+        .control-label { display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; margin-bottom: 10px; color: var(--accent-cyan); }
         
-        /* Orta Görsel Alan */
-        #viewport-container { 
-            grid-column: 2; 
+        input[type=range] { 
+            width: 100%; height: 4px; border-radius: 5px; 
+            appearance: none; background: #1e293b; accent-color: var(--accent-cyan); cursor: pointer;
+        }
+
+        /* --- MERKEZİ GÖRÜNTÜLEYİCİ (VIEWPORT) --- */
+        #main-viewport {
             position: relative;
             background: radial-gradient(circle at center, #0a1428 0%, #02040a 100%);
-            margin: 15px 0;
-            border-radius: 25px;
             display: flex;
             justify-content: center;
             align-items: center;
             overflow: hidden;
         }
 
-        /* Sağ Veri Paneli */
-        #data-panel { grid-column: 3; }
-
-        /* Başlıklar */
-        h1, h2, h3 { color: var(--accent-cyan); text-transform: uppercase; letter-spacing: 2px; }
-        .sub-text { font-size: 11px; color: #64748b; margin-bottom: 20px; font-family: 'JetBrains Mono'; }
-
-        /* SVG Viewport */
-        svg#master-svg {
+        #master-svg {
             width: 100%;
-            height: 100%;
-            cursor: grab;
+            height: 95%;
+            filter: drop-shadow(0 0 20px rgba(0, 242, 255, 0.05));
         }
-        svg#master-svg:active { cursor: grabbing; }
 
-        /* Etkileşimli Parçalar */
+        /* Etkileşimli Parça Stilleri */
         .anatomy-clickable {
+            cursor: pointer;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            filter: drop-shadow(0 0 2px transparent);
+            stroke-linejoin: round;
         }
         .anatomy-clickable:hover {
             fill-opacity: 1 !important;
+            filter: drop-shadow(0 0 15px var(--accent-cyan));
             stroke: #fff !important;
             stroke-width: 1.5px !important;
-            filter: drop-shadow(0 0 8px var(--accent-cyan));
         }
 
-        /* Katman Sliderları */
-        .layer-control { margin-bottom: 20px; }
-        .layer-label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px; }
-        input[type=range] { width: 100%; accent-color: var(--accent-cyan); cursor: pointer; }
+        /* --- SAĞ VERİ PANELİ --- */
+        #sidebar-right {
+            background: var(--panel-bg);
+            border-left: 1px solid var(--glass-border);
+            padding: 30px;
+            overflow-y: auto;
+        }
 
-        /* Bilgi Tablosu */
-        .info-table { width: 100%; margin-top: 20px; border-collapse: collapse; }
-        .info-table td { padding: 12px 5px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 14px; }
-        .attr-name { color: var(--accent-cyan); font-weight: 600; width: 40%; }
+        .data-card {
+            background: rgba(255,255,255,0.03);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            border-left: 4px solid var(--accent-cyan);
+        }
+
+        #part-name { font-size: 28px; font-weight: 800; margin-bottom: 5px; color: #fff; }
+        #part-latin { font-style: italic; color: var(--accent-cyan); margin-bottom: 20px; font-size: 15px; }
+
+        .stats-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        .stats-table td { padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 14px; }
+        .label { color: var(--text-dim); width: 100px; }
+
+        /* Terminal Stili */
+        #terminal {
+            margin-top: auto;
+            background: #000;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: #4ade80;
+            border: 1px solid #1e293b;
+        }
+
+        /* --- ANİMASYONLAR --- */
+        @keyframes pulse { 0% { opacity: 0.8; } 50% { opacity: 1; } 100% { opacity: 0.8; } }
+        .loading-state { animation: pulse 2s infinite; text-align: center; }
+
     </style>
 </head>
 <body>
 
-    <aside id="control-panel" class="panel">
+    <aside id="sidebar-left">
         <div class="brand">
-            <h2>Bio-Master <span style="color:var(--accent-pink)">PRO</span></h2>
-            <div class="sub-text">v1.0.4 - Medical Visualization Engine</div>
+            <h2>BIO-MASTER <span>PRO</span></h2>
+            <div class="version-tag">SYSTEM CORE v2.0.4 [STABLE]</div>
         </div>
 
-        <div class="layer-control">
-            <div class="layer-label">OSTEOLOJİ (İskelet) <span id="val-skeletal">100%</span></div>
-            <input type="range" id="input-skeletal" min="0" max="1" step="0.01" value="1">
+        <div class="control-group">
+            <div class="control-label">İSKELET SİSTEMİ <span id="val-skeletal">100%</span></div>
+            <input type="range" id="slider-skeletal" min="0" max="1" step="0.01" value="1">
         </div>
 
-        <div class="layer-control">
-            <div class="layer-label">SPLANCHNOLOGY (Organlar) <span id="val-visceral">100%</span></div>
-            <input type="range" id="input-visceral" min="0" max="1" step="0.01" value="1">
+        <div class="control-group">
+            <div class="control-label">ORGAN SİSTEMİ <span id="val-visceral">100%</span></div>
+            <input type="range" id="slider-visceral" min="0" max="1" step="0.01" value="1">
         </div>
 
-        <div id="status-display" style="margin-top: auto; font-family: 'JetBrains Mono'; font-size: 12px; color: #4ade80;">
-            <i class="fas fa-terminal"></i> <span id="terminal-text">Sistem hazır...</span>
+        <div id="terminal">
+            <i class="fas fa-terminal"></i> > System Initialized...
         </div>
     </aside>
 
-    <main id="viewport-container">
+    <main id="main-viewport">
         <svg id="master-svg" viewBox="0 0 800 1200" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-                <filter id="glow">
-                    <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
-                    <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
-                </filter>
-            </defs>
+            <g id="layer-skeletal" style="transition: opacity 0.5s ease;">
+                </g>
+<g id="skull-complex">
+    <path class="anatomy-clickable" 
+          d="M320,150 c0,-45 30,-75 80,-75 s80,30 80,75 c0,25 -10,40 -25,50 l-110,0 c-15,-10 -25,-25 -25,-50" 
+          fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5"
+          data-name="Frontal Kemik" 
+          data-latin="Os Frontale" 
+          data-system="İskelet / Nörokranium" 
+          data-function="Beynin frontal lobunu korur ve alın yapısını oluşturur." 
+          data-connection="Parietal, Sphenoid, Ethmoid, Nasal, Zygomatic" 
+          data-description="Tek ve geniş bir kemiktir. Kaş çıkıntılarını (arcus superciliaris) barındırır." />
+
+    <path class="anatomy-clickable" 
+          d="M480,150 c0,-40 -10,-65 -35,-80 c45,5 75,40 75,80 c0,45 -25,75 -55,90 l15,-90" 
+          fill="#cbd5e1" stroke="#94a3b8" stroke-width="1"
+          data-name="Parietal Kemik (Sağ)" 
+          data-latin="Os Parietale" 
+          data-system="İskelet / Nörokranium" 
+          data-function="Kafatasının üst ve yan duvarlarını oluşturur." 
+          data-connection="Frontal, Occipital, Temporal, Sphenoid" 
+          data-description="Kafatasının en geniş kemiklerinden biridir. Sağ ve sol eşleniktir." />
+
+    <path class="anatomy-clickable" 
+          d="M320,150 c0,-40 10,-65 35,-80 c-45,5 -75,40 -75,80 c0,45 25,75 55,90 l-15,-90" 
+          fill="#cbd5e1" stroke="#94a3b8" stroke-width="1"
+          data-name="Parietal Kemik (Sol)" 
+          data-latin="Os Parietale" 
+          data-system="İskelet / Nörokranium" 
+          data-function="Beyin hemisferlerini üstten korur." 
+          data-connection="Frontal, Occipital, Temporal, Sphenoid" 
+          data-description="İki parietal kemik ortada Sagittal Sütür ile birleşir." />
+
+    <path class="anatomy-clickable" 
+          d="M470,200 c15,5 25,30 20,50 s-25,35 -45,30 l25,-80" 
+          fill="#94a3b8" stroke="#64748b" stroke-width="1"
+          data-name="Zygomatic Kemik (Sağ)" 
+          data-latin="Os Zygomaticum" 
+          data-system="İskelet / Visseroseranyum" 
+          data-function="Yüzün lateral çıkıntısını ve göz çukuru (orbita) dış duvarını oluşturur." 
+          data-connection="Maxilla, Frontal, Temporal, Sphenoid" 
+          data-description="Halk arasında elmacık kemiği olarak bilinir." />
+
+    <path class="anatomy-clickable" 
+          d="M375,235 l50,0 l15,45 l-80,0 z" 
+          fill="#f8fafc" stroke="#94a3b8" stroke-width="1.5"
+          data-name="Maxilla" 
+          data-latin="Os Maxilla" 
+          data-system="İskelet / Visseroseranyum" 
+          data-function="Üst dişleri taşır, damak ve burun tabanını oluşturur." 
+          data-connection="Nasal, Zygomatic, Lacrimal, Ethmoid" 
+          data-description="Sabittir. İçinde maksiller sinüs adı verilen boşluklar bulunur." />
+
+    <path class="anatomy-clickable" 
+          d="M370,290 l60,0 l20,40 c0,20 -20,35 -50,35 s-50,-15 -50,-35 z" 
+          fill="#cbd5e1" stroke="#475569" stroke-width="2"
+          data-name="Mandibula" 
+          data-latin="Os Mandibula" 
+          data-system="İskelet / Visseroseranyum" 
+          data-function="Çiğneme ve konuşma. Alt dişleri taşır." 
+          data-connection="Temporal (TMJ Eklemi)" 
+          data-description="Kafatasının tek hareketli kemiğidir. Vücudun en güçlü kemiklerindendir." />
+          
+    <path class="anatomy-clickable" 
+          d="M390,200 h20 l5,30 h-30 z" 
+          fill="#e2e8f0" stroke="#94a3b8" stroke-width="1"
+          data-name="Nasal Kemik" 
+          data-latin="Os Nasale" 
+          data-system="İskelet" 
+          data-function="Burun köprüsünü oluşturur." 
+          data-connection="Frontal, Maxilla, Ethmoid" 
+          data-description="İki küçük dikdörtgen kemikten oluşur." />
+        </g>
+    
+            <g id="layer-visceral" style="transition: opacity 0.5s ease;">
+                </g>
+
             
-            <g id="main-group">
-                <text x="400" y="600" fill="white" font-family="Arial" font-size="20" text-anchor="middle" id="loader-msg">
-                    ANATOMİK VERİ BEKLENİYOR...
-                </text>
-            </g>
         </svg>
     </main>
 
-    <aside id="data-panel" class="panel">
-        <h3><i class="fas fa-microscope"></i> Analiz Paneli</h3>
-        <div id="no-selection" style="margin-top: 40px; text-align: center; color: #64748b;">
-            <i class="fas fa-hand-pointer fa-3x" style="margin-bottom: 20px; opacity: 0.3;"></i>
-            <p>Lütfen incelemek istediğiniz yapıyı model üzerinden seçin.</p>
+    <aside id="sidebar-right">
+        <div id="no-selection-msg">
+            <h3 style="color: var(--accent-cyan); text-transform: uppercase; letter-spacing: 1px;">Analiz Bekleniyor</h3>
+            <p style="color: var(--text-dim); font-size: 14px; margin-top: 10px;">Lütfen tarama yapmak için bir anatomik yapı seçin.</p>
         </div>
 
-        <div id="active-selection" style="display: none;">
-            <h1 id="part-title" style="margin-top: 20px;">-</h1>
-            <div id="part-latin" style="color: var(--accent-cyan); font-style: italic; margin-bottom: 15px;">-</div>
+        <div id="data-content" style="display: none;">
+            <div id="part-name">YAPI ADI</div>
+            <div id="part-latin">Terminologia Anatomica</div>
             
-            <table class="info-table">
-                <tr><td class="attr-name">Sistem</td><td id="info-system">-</td></tr>
-                <tr><td class="attr-name">Fonksiyon</td><td id="info-func">-</td></tr>
-                <tr><td class="attr-name">Bağlantılar</td><td id="info-conn">-</td></tr>
-            </table>
+            <div class="data-card">
+                <table class="stats-table">
+                    <tr><td class="label">Sistem:</td><td id="info-system">-</td></tr>
+                    <tr><td class="label">Fonksiyon:</td><td id="info-function">-</td></tr>
+                    <tr><td class="label">Bağlantı:</td><td id="info-connection">-</td></tr>
+                </table>
+            </div>
 
-            <div style="margin-top: 25px;">
-                <h4 style="color: var(--accent-pink); margin-bottom: 10px;">KLİNİK NOTLAR</h4>
-                <p id="info-desc" style="font-size: 13px; line-height: 1.6; color: #94a3b8;">-</p>
+            <div style="margin-top: 30px;">
+                <h4 style="color: var(--accent-pink); font-size: 12px; letter-spacing: 2px; margin-bottom: 10px;">KLİNİK NOTLAR</h4>
+                <p id="info-description" style="font-size: 14px; line-height: 1.6; color: var(--text-dim);"></p>
             </div>
         </div>
     </aside>
 
     <script>
-        // ANA ENGINE JAVASCRIPT
-        const state = {
-            selectedPart: null,
-            layers: { skeletal: 1, visceral: 1 }
+        /**
+         * BIO-MASTER CORE ENGINE
+         * Bu betik, ileride eklenecek tüm modüllerin beynidir.
+         */
+        const BioMaster = {
+            init() {
+                this.setupEventListeners();
+                this.log("Core Engine v2.0 is online.");
+            },
+
+            log(msg) {
+                const term = document.querySelector('#terminal');
+                term.innerHTML = `<i class="fas fa-terminal"></i> > ${msg}`;
+            },
+
+            setupEventListeners() {
+                // Tıklama Dinleyicisi (Delegasyon - Performans için)
+                document.getElementById('master-svg').addEventListener('click', (e) => {
+                    const target = e.target.closest('.anatomy-clickable');
+                    if (target) this.showDetails(target);
+                });
+
+                // İskelet Slider
+                document.getElementById('slider-skeletal').addEventListener('input', (e) => {
+                    const val = e.target.value;
+                    document.getElementById('layer-skeletal').style.opacity = val;
+                    document.getElementById('val-skeletal').innerText = Math.round(val * 100) + '%';
+                });
+
+                // Organ Slider
+                document.getElementById('slider-visceral').addEventListener('input', (e) => {
+                    const val = e.target.value;
+                    document.getElementById('layer-visceral').style.opacity = val;
+                    document.getElementById('val-visceral').innerText = Math.round(val * 100) + '%';
+                });
+            },
+
+            showDetails(el) {
+                const data = el.dataset;
+                document.getElementById('no-selection-msg').style.display = 'none';
+                document.getElementById('data-content').style.display = 'block';
+
+                document.getElementById('part-name').innerText = data.name || 'Bilinmiyor';
+                document.getElementById('part-latin').innerText = data.latin || 'N/A';
+                document.getElementById('info-system').innerText = data.system || '-';
+                document.getElementById('info-function').innerText = data.function || '-';
+                document.getElementById('info-connection').innerText = data.connection || '-';
+                document.getElementById('info-description').innerText = data.description || 'Veri bulunamadı.';
+
+                this.log(`Analyzing: ${data.name}`);
+            }
         };
 
-        // UI Güncelleme
-        const terminal = document.getElementById('terminal-text');
-        
-        function log(msg) {
-            terminal.innerText = `> ${msg}`;
-        }
-
-        // Katman Kontrolü
-        document.getElementById('input-skeletal').oninput = (e) => {
-            const v = e.target.value;
-            document.getElementById('val-skeletal').innerText = Math.round(v * 100) + '%';
-            // Gelecekteki iskelet grubu burayı dinleyecek
-        };
-
-        log("Modül 01: Çekirdek motor yüklendi.");
+        // Motoru Başlat
+        window.onload = () => BioMaster.init();
     </script>
 </body>
-  </html>
+                </html>
 
-
-  <g id="skull-group" class="layer-group">
-    <path class="anatomy-clickable bone-part" 
-          d="M320,150 c0,-40 30,-70 80,-70 s80,30 80,70 c0,20 -10,35 -25,45 l-110,0 c-15,-10 -25,-25 -25,-45" 
-          fill="#e2e8f0" stroke="#94a3b8" stroke-width="1"
-          data-name="Frontal Kemik" data-lat="Os Frontale" data-sys="İskelet" 
-          data-func="Beynin ön lobunu korur ve alın yapısını oluşturur." 
-          data-conn="Parietal, Zygomatic, Nasal" 
-          data-desc="Tek bir kemiktir. Kaş çıkıntılarını (Arcus superciliaris) ve göz çukurlarının üst kısmını barındırır." />
-
-    <path class="anatomy-clickable bone-part" 
-          d="M480,150 c0,-40 -10,-60 -30,-75 c40,5 70,35 70,75 c0,40 -20,70 -50,85 l10,-85" 
-          fill="#cbd5e1" stroke="#94a3b8" stroke-width="1"
-          data-name="Parietal Kemik (Sağ)" data-lat="Os Parietale" data-sys="İskelet" 
-          data-func="Kafatasının üst ve yan duvarlarını oluşturur." 
-          data-conn="Frontal, Occipital, Temporal" 
-          data-desc="Çift kemiktir. En geniş kafa kemiklerindendir." />
-
-    <path class="anatomy-clickable bone-part" 
-          d="M320,150 c0,-40 10,-60 30,-75 c-40,5 -70,35 -70,75 c0,40 20,70 50,85 l-10,-85" 
-          fill="#cbd5e1" stroke="#94a3b8" stroke-width="1"
-          data-name="Parietal Kemik (Sol)" data-lat="Os Parietale" data-sys="İskelet" 
-          data-func="Kafatasının üst ve yan duvarlarını oluşturur." 
-          data-conn="Frontal, Occipital, Temporal" 
-          data-desc="Simetrik yapıdadır." />
-
-    <path class="anatomy-clickable bone-part" 
-          d="M475,195 c15,5 25,25 20,45 s-20,30 -40,25 l20,-70" 
-          fill="#94a3b8" stroke="#64748b" stroke-width="1"
-          data-name="Zygomatic Kemik" data-lat="Os Zygomaticum" data-sys="İskelet" 
-          data-func="Yüzün çıkıntısını ve göz çukurunun dış duvarını oluşturur." 
-          data-conn="Maxilla, Frontal, Temporal" 
-          data-desc="Elmacık kemiği olarak bilinir." />
-
-    <path class="anatomy-clickable bone-part" 
-          d="M370,230 l60,0 l10,40 l-80,0 z" 
-          fill="#f1f5f9" stroke="#94a3b8" stroke-width="1"
-          data-name="Maxilla" data-lat="Os Maxilla" data-sys="İskelet" 
-          data-func="Üst dişleri taşır ve burun boşluğu tabanını oluşturur." 
-          data-conn="Nasal, Zygomatic, Mandibula" 
-          data-desc="Sabit kemiktir, konuşma ve çiğnemede temel dayanaktır." />
-
-    <path class="anatomy-clickable bone-part" 
-          d="M370,280 l60,0 l15,30 c0,15 -15,25 -45,25 s-45,-10 -45,-25 z" 
-          fill="#cbd5e1" stroke="#475569" stroke-width="1"
-          data-name="Mandibula" data-lat="Os Mandibula" data-sys="İskelet" 
-          data-func="Çiğneme hareketini sağlayan tek hareketli kafa kemiği." 
-          data-conn="Temporal (TMJ Eklemi)" 
-          data-desc="Vücuttaki en güçlü kemiklerden biridir." />
-    </g>
-
-
-      <g id="spine-group" class="layer-group">
-    <path class="anatomy-clickable bone-part" 
-          d="M380,335 l40,0 l5,10 l-50,0 z" 
-          fill="#cbd5e1" stroke="#94a3b8" stroke-width="1"
-          data-name="Atlas (C1)" data-lat="Vertebra Cervicalis I" data-sys="İskelet / Omurga" 
-          data-func="Kafatasını taşır ve yukarı-aşağı (selamlama) hareketini sağlar." 
-          data-conn="Occipital Kondiller, Axis (C2)" 
-          data-desc="Gövdesi olmayan halka şeklinde bir kemiktir. İsmini Yunan mitolojisindeki dünyayı taşıyan devden alır." />
-
-    <path class="anatomy-clickable bone-part" 
-          d="M375,350 l50,0 l5,12 l-60,0 z" 
-          fill="#94a3b8" stroke="#64748b" stroke-width="1"
-          data-name="Axis (C2)" data-lat="Vertebra Cervicalis II" data-sys="İskelet / Omurga" 
-          data-func="Kafanın sağa-sola dönme hareketini sağlayan eksen kemiğidir." 
-          data-conn="Atlas (C1), C3" 
-          data-desc="Dens adı verilen çıkıntısı ile Atlas'ın içinde bir pivot eklem oluşturur." />
-
-    <g id="cervical-vertebrae">
-        <path class="anatomy-clickable bone-part" d="M370,365 h60 v10 h-60 z" fill="#cbd5e1" stroke="#94a3b8" 
-              data-name="C3 Omur" data-lat="Vertebra Cervicalis III" data-sys="İskelet" data-func="Boyun desteği." data-conn="C2, C4" data-desc="Tipik servikal omur yapısındadır." />
-        <path class="anatomy-clickable bone-part" d="M368,378 h64 v10 h-64 z" fill="#94a3b8" stroke="#64748b" 
-              data-name="C4 Omur" data-lat="Vertebra Cervicalis IV" data-sys="İskelet" data-func="Boyun desteği." data-conn="C3, C5" data-desc="Boyun kavisinin merkezine yakındır." />
-        <path class="anatomy-clickable bone-part" d="M366,391 h68 v10 h-68 z" fill="#cbd5e1" stroke="#94a3b8" 
-              data-name="C5 Omur" data-lat="Vertebra Cervicalis V" data-sys="İskelet" data-func="Boyun desteği." data-conn="C4, C6" data-desc="Boyun hareketliliğine yardımcı olur." />
-        <path class="anatomy-clickable bone-part" d="M364,404 h72 v10 h-72 z" fill="#94a3b8" stroke="#64748b" 
-              data-name="C6 Omur" data-lat="Vertebra Cervicalis VI" data-sys="İskelet" data-func="Boyun desteği." data-conn="C5, C7" data-desc="Karotis tüberkülünü barındırır." />
-        <path class="anatomy-clickable bone-part" d="M360,417 h80 v12 h-80 z" fill="#64748b" stroke="#334155" 
-              data-name="C7 (Vertebra Prominens)" data-lat="Vertebra Cervicalis VII" data-sys="İskelet" 
-              data-func="Boyun ve sırt geçişini sağlar." data-conn="C6, T1" 
-              data-desc="En uzun spinöz çıkıntıya sahiptir, boyun arkasında elle hissedilebilir." />
-    </g>
-
-    <g opacity="0.4">
-        <rect x="385" y="345" width="30" height="5" fill="#00f2ff" />
-        <rect x="380" y="362" width="40" height="3" fill="#00f2ff" />
-        <rect x="378" y="375" width="44" height="3" fill="#00f2ff" />
-    </g>
-          </g>
-    <g id="thorax-group" class="layer-group">
-    <path class="anatomy-clickable bone-part" 
-          d="M390,430 h20 l5,10 l-5,100 l-20,0 l-5,-100 z" 
-          fill="#f8fafc" stroke="#94a3b8" stroke-width="1.5"
-          data-name="Sternum" data-lat="Sternum" data-sys="İskelet / Toraks" 
-          data-func="Kaburgaların ön birleşme noktasıdır ve kalbi korur." 
-          data-conn="Clavicula, Costae (1-7)" 
-          data-desc="Manubrium, Corpus Sterni ve Processus Xiphoideus olmak üzere üç parçadan oluşur." />
-
-    <g id="ribs-right">
-        <path class="anatomy-clickable bone-part" d="M410,440 q60,-10 70,20 t-65,30" fill="none" stroke="#cbd5e1" stroke-width="3" data-name="1. Kaburga (Sağ)" data-lat="Costa I" data-sys="İskelet" data-func="Toraks üst açıklığını oluşturur." data-conn="T1, Sternum" data-desc="En kısa ve en geniş kaburgadır." />
-        <path class="anatomy-clickable bone-part" d="M412,460 q80,-5 90,30 t-85,40" fill="none" stroke="#94a3b8" stroke-width="3" data-name="3. Kaburga (Sağ)" data-lat="Costa III" data-sys="İskelet" data-func="Koruma ve solunum." data-conn="T3, Sternum" data-desc="Tipik kaburga yapısındadır." />
-        <path class="anatomy-clickable bone-part" d="M413,485 q100,0 110,40 t-105,50" fill="none" stroke="#cbd5e1" stroke-width="3" data-name="5. Kaburga (Sağ)" data-lat="Costa V" data-sys="İskelet" data-func="Akciğer genişlemesine izin verir." data-conn="T5, Sternum" data-desc="Solunum mekaniğinde aktiftir." />
-        <path class="anatomy-clickable bone-part" d="M413,515 q110,10 115,55 t-110,65" fill="none" stroke="#94a3b8" stroke-width="3" data-name="7. Kaburga (Sağ)" data-lat="Costa VII" data-sys="İskelet" data-func="En uzun gerçek kaburgadır." data-conn="T7, Sternum" data-desc="Doğrudan sternuma bağlanan son kaburgadır." />
-    </g>
-
-    <g id="ribs-left">
-        <path class="anatomy-clickable bone-part" d="M390,440 q-60,-10 -70,20 t65,30" fill="none" stroke="#cbd5e1" stroke-width="3" data-name="1. Kaburga (Sol)" data-lat="Costa I" data-sys="İskelet" data-func="Toraks üst açıklığı." data-conn="T1, Sternum" data-desc="Subclavian arter ve ven üzerinden geçer." />
-        <path class="anatomy-clickable bone-part" d="M388,460 q-80,-5 -90,30 t85,40" fill="none" stroke="#94a3b8" stroke-width="3" data-name="3. Kaburga (Sol)" data-lat="Costa III" data-sys="İskelet" data-func="Koruma ve solunum." data-conn="T3, Sternum" data-desc="Toraks hacmine katkı sağlar." />
-        <path class="anatomy-clickable bone-part" d="M387,485 q-100,0 -110,40 t105,50" fill="none" stroke="#cbd5e1" stroke-width="3" data-name="5. Kaburga (Sol)" data-lat="Costa V" data-sys="İskelet" data-func="Solunum desteği." data-conn="T5, Sternum" data-desc="Esnek kıkırdak yapısı ile göğüs genişlemesini sağlar." />
-        <path class="anatomy-clickable bone-part" d="M387,515 q-110,10 -115,55 t110,65" fill="none" stroke="#94a3b8" stroke-width="3" data-name="7. Kaburga (Sol)" data-lat="Costa VII" data-sys="İskelet" data-func="Göğüs kafesi bütünlüğü." data-conn="T7, Sternum" data-desc="Sternuma bağlanan en alt seviyedeki kaburgadır." />
-    </g>
-
-    <g opacity="0.6" stroke="#00f2ff" stroke-width="1.5" fill="none">
-        <path d="M410,440 l-10,0 M412,460 l-12,5 M413,485 l-13,10 M413,515 l-13,15" />
-        <path d="M390,440 l10,0 M388,460 l12,5 M387,485 l13,10 M387,515 l13,15" />
-    </g>
-          </g>
-          <g id="pelvis-group" class="layer-group">
-    <path class="anatomy-clickable bone-part" 
-          d="M390,560 l20,0 l5,40 l-15,20 l-15,-20 l5,-40 z" 
-          fill="#94a3b8" stroke="#64748b" stroke-width="1"
-          data-name="Sakrum" data-lat="Os Sacrum" data-sys="İskelet / Aksiyel" 
-          data-func="Omurganın yükünü pelvis aracılığıyla bacaklara aktarır." 
-          data-conn="L5 Omur, İlium, Koksiks" 
-          data-desc="Beş adet omurun birleşmesiyle oluşan üçgen şeklinde güçlü bir kemiktir." />
-
-    <path class="anatomy-clickable bone-part" 
-          d="M415,565 c30,-10 50,10 55,40 s-10,50 -35,55 l-20,-35 z" 
-          fill="#cbd5e1" stroke="#94a3b8" stroke-width="1.5"
-          data-name="İlium (Sağ)" data-lat="Os Ilium" data-sys="İskelet / Pelvis" 
-          data-func="Leğen kemiğinin en geniş kısmıdır, karın organlarını destekler." 
-          data-conn="Sacrum, Ischium, Femur" 
-          data-desc="Pelvisin üst kanat yapısını oluşturur. Crista iliaca bu bölgededir." />
-
-    <path class="anatomy-clickable bone-part" 
-          d="M385,565 c-30,-10 -50,10 -55,40 s10,50 35,55 l20,-35 z" 
-          fill="#cbd5e1" stroke="#94a3b8" stroke-width="1.5"
-          data-name="İlium (Sol)" data-lat="Os Ilium" data-sys="İskelet / Pelvis" 
-          data-func="Gövde ağırlığını destekleyen ana kemik yapısı." 
-          data-conn="Sacrum, Ischium, Femur" 
-          data-desc="Simetrik sol kanat yapısı." />
-
-    <path class="anatomy-clickable bone-part" 
-          d="M375,630 q25,30 50,0 l-5,15 q-20,15 -40,0 z" 
-          fill="#94a3b8" stroke="#475569" stroke-width="1"
-          data-name="Pubis ve Simfizis" data-lat="Symphysis Pubica" data-sys="İskelet" 
-          data-func="İki kalça kemiğinin ön birleşme noktasıdır." 
-          data-conn="Ilium, Ischium" 
-          data-desc="Yarı hareketli bir eklem yapısına sahiptir." />
-
-    <circle class="anatomy-clickable bone-part" cx="445" cy="635" r="8" fill="#00f2ff" opacity="0.4"
-            data-name="Acetabulum" data-lat="Acetabulum" data-sys="Eklem" 
-            data-func="Femur başının yerleştiği kalça eklemi yuvasıdır." 
-            data-conn="Femur" data-desc="Üç pelvis kemiğinin birleştiği çukur alandır." />
-
-    <circle class="anatomy-clickable bone-part" cx="355" cy="635" r="8" fill="#00f2ff" opacity="0.4"
-            data-name="Acetabulum" data-lat="Acetabulum" data-sys="Eklem" 
-            data-func="Kalça eklemi stabilitesini sağlar." 
-            data-conn="Femur" data-desc="Top-yuva tipi eklemin yuva kısmıdır." />
-    </g>
-    <g id="shoulder-arm-group" class="layer-group">
-    <path class="anatomy-clickable bone-part" 
-          d="M410,430 q30,-15 70,-5 l5,8 q-40,-10 -75,5 z" 
-          fill="#f1f5f9" stroke="#94a3b8" stroke-width="1"
-          data-name="Köprücük Kemiği (Sağ)" data-lat="Clavicula" data-sys="İskelet / Omuz" 
-          data-func="Kolu gövdeye bağlayan ana destek kemiğidir." 
-          data-conn="Sternum, Scapula" 
-          data-desc="Vücutta en sık kırılan kemiklerden biridir. S şeklinde bir kıvrıma sahiptir." />
-
-    <path class="anatomy-clickable bone-part" 
-          d="M390,430 q-30,-15 -70,-5 l-5,8 q0,0 75,5 z" 
-          fill="#f1f5f9" stroke="#94a3b8" stroke-width="1"
-          data-name="Köprücük Kemiği (Sol)" data-lat="Clavicula" data-sys="İskelet" 
-          data-func="Üst ekstremite ağırlığını aksiyel iskelete aktarır." 
-          data-conn="Sternum, Scapula" 
-          data-desc="Yatay konumda bulunan tek uzun kemiktir." />
-
-    <path class="anatomy-clickable bone-part" 
-          d="M480,440 l30,10 l-10,60 l-30,-40 z" 
-          fill="#cbd5e1" stroke="#94a3b8" stroke-width="1"
-          data-name="Kürek Kemiği (Sağ)" data-lat="Scapula" data-sys="İskelet" 
-          data-func="Omuz ekleminin temelini oluşturur ve kaslara geniş tutunma alanı sağlar." 
-          data-conn="Humerus, Clavicula" 
-          data-desc="Üçgen formunda yassı bir kemiktir. Arkada 2-7. kaburgalar arasında yer alır." />
-
-    <path class="anatomy-clickable bone-part" 
-          d="M320,440 l-30,10 l10,60 l30,-40 z" 
-          fill="#cbd5e1" stroke="#94a3b8" stroke-width="1"
-          data-name="Kürek Kemiği (Sol)" data-lat="Scapula" data-sys="İskelet" 
-          data-func="Kol hareketlerini stabilize eder." 
-          data-conn="Humerus, Clavicula" 
-          data-desc="Gövdeye sadece kaslar ve Clavicula aracılığıyla tutunur." />
-
-    <path class="anatomy-clickable bone-part" 
-          d="M505,455 l20,120 q2,10 -10,10 t-15,-10 l-10,-100 z" 
-          fill="#e2e8f0" stroke="#64748b" stroke-width="1.5"
-          data-name="Humerus (Sağ)" data-lat="Os Humeri" data-sys="İskelet / Kol" 
-          data-func="Omuz ve dirsek arasındaki mesafeyi sağlar, güçlü kol kaslarına yataklık eder." 
-          data-conn="Scapula, Radius, Ulna" 
-          data-desc="Üst ekstremitenin en uzun ve en büyük kemiğidir." />
-
-    <path class="anatomy-clickable bone-part" 
-          d="M295,455 l-20,120 q-2,10 10,10 t15,-10 l10,-100 z" 
-          fill="#e2e8f0" stroke="#64748b" stroke-width="1.5"
-          data-name="Humerus (Sol)" data-lat="Os Humeri" data-sys="İskelet" 
-          data-func="Kolun hareket menzilini belirler." 
-          data-conn="Scapula, Radius, Ulna" 
-          data-desc="Caput humeri (baş kısmı) Scapula'daki glenoid boşluğa oturur." />
-    </g>
-    <g id="forearm-hand-group" class="layer-group">
-    <path class="anatomy-clickable bone-part" 
-          d="M515,575 l15,100 q2,10 -8,10 t-12,-10 l-10,-100 z" 
-          fill="#cbd5e1" stroke="#94a3b8" stroke-width="1"
-          data-name="Radius (Sağ)" data-lat="Radius" data-sys="İskelet / Ön Kol" 
-          data-func="Bileğin dönme hareketini (pronasyon/supinasyon) sağlar." 
-          data-conn="Humerus, Ulna, Karpal Kemikler" 
-          data-desc="Dış yan tarafta yer alan, distal ucu daha geniş olan kemiktir." />
-
-    <path class="anatomy-clickable bone-part" 
-          d="M530,575 l10,100 q2,10 -8,10 t-12,-10 l-5,-100 z" 
-          fill="#94a3b8" stroke="#64748b" stroke-width="1"
-          data-name="Ulna (Sağ)" data-lat="Ulna" data-sys="İskelet / Ön Kol" 
-          data-func="Dirsek ekleminin ana yapısını oluşturur." 
-          data-conn="Humerus, Radius" 
-          data-desc="İç yan tarafta yer alır. Dirsek çıkıntısını (Olecranon) oluşturur." />
-
-    <path class="anatomy-clickable bone-part" 
-          d="M285,575 l-15,100 q-2,10 8,10 t12,-10 l10,-100 z" 
-          fill="#cbd5e1" stroke="#94a3b8" stroke-width="1"
-          data-name="Radius (Sol)" data-lat="Radius" data-sys="İskelet" 
-          data-func="Ön kolun rotasyon yeteneği." 
-          data-conn="Humerus, Ulna" data-desc="Simetrik yapı." />
-
-    <path class="anatomy-clickable bone-part" 
-          d="M270,575 l-10,100 q-2,10 8,10 t12,-10 l5,-100 z" 
-          fill="#94a3b8" stroke="#64748b" stroke-width="1"
-          data-name="Ulna (Sol)" data-lat="Ulna" data-sys="İskelet" 
-          data-func="Dirsek eklemi stabilitesi." 
-          data-conn="Humerus, Radius" data-desc="Simetrik yapı." />
-
-    <path class="anatomy-clickable bone-part" 
-          d="M515,685 l-10,30 l25,20 l15,-20 l-10,-30 z" 
-          fill="#f1f5f9" stroke="#94a3b8" stroke-width="1"
-          data-name="El Kemikleri (Sağ)" data-lat="Ossa Manus" data-sys="İskelet / El" 
-          data-func="Kavrama, tutma ve hassas manipülasyon." 
-          data-conn="Radius, Ulna" 
-          data-desc="Karpal, metakarpal ve falanks kemiklerinden oluşan karmaşık mekanizma." />
-
-    <path class="anatomy-clickable bone-part" 
-          d="M285,685 l10,30 l-25,20 l-15,-20 l10,-30 z" 
-          fill="#f1f5f9" stroke="#94a3b8" stroke-width="1"
-          data-name="El Kemikleri (Sol)" data-lat="Ossa Manus" data-sys="İskelet" 
-          data-func="Hassas beceri ve kavrama." 
-          data-conn="Radius, Ulna" data-desc="27 adet kemikten oluşur." />
-      </g>
-    <g id="upper-leg-group" class="layer-group">
-    <path class="anatomy-clickable bone-part" 
-          d="M445,635 l10,180 c2,15 -15,20 -25,10 l-10,-190 z" 
-          fill="#f8fafc" stroke="#94a3b8" stroke-width="1.5"
-          data-name="Femur (Sağ)" data-lat="Os Femoris" data-sys="İskelet / Alt Ekstremite" 
-          data-func="Vücut ağırlığını taşır ve yürüme/koşma mekaniğinin ana kaldıracıdır." 
-          data-conn="Pelvis (Acetabulum), Tibia, Patella" 
-          data-desc="Vücudun en uzun, en güçlü ve en ağır kemiğidir. Proksimal ucu kalça eklemini oluşturur." />
-
-    <path class="anatomy-clickable bone-part" 
-          d="M355,635 l-10,180 c-2,15 15,20 25,10 l10,-190 z" 
-          fill="#f8fafc" stroke="#94a3b8" stroke-width="1.5"
-          data-name="Femur (Sol)" data-lat="Os Femoris" data-sys="İskelet" 
-          data-func="Statik ve dinamik yük taşıma." 
-          data-conn="Pelvis, Tibia" data-desc="Simetrik sağ femur ile aynı dayanıklılığa sahiptir." />
-
-    <path class="anatomy-clickable bone-part" 
-          d="M448,815 a8,8 0 1,0 16,0 a8,8 0 1,0 -16,0" 
-          fill="#e2e8f0" stroke="#00f2ff" stroke-width="1"
-          data-name="Patella (Sağ)" data-lat="Patella" data-sys="İskelet / Sesamoit" 
-          data-func="Quadriceps kasının gücünü artırır ve diz eklemini korur." 
-          data-conn="Femur (Trochlea), Tibia" 
-          data-desc="Vücudun en büyük sesamoit (kas kirişi içinde yer alan) kemiğidir." />
-
-    <path class="anatomy-clickable bone-part" 
-          d="M336,815 a8,8 0 1,0 16,0 a8,8 0 1,0 -16,0" 
-          fill="#e2e8f0" stroke="#00f2ff" stroke-width="1"
-          data-name="Patella (Sol)" data-lat="Patella" data-sys="İskelet" 
-          data-func="Diz eklemi mekaniği." 
-          data-conn="Femur, Tibia" data-desc="Diz ekleminin önünde koruyucu kalkan görevi görür." />
-      </g>
-    <g id="lower-leg-group" class="layer-group">
-    <path class="anatomy-clickable bone-part" 
-          d="M452,825 l8,140 q2,15 -10,15 t-15,-10 l-10,-145 z" 
-          fill="#cbd5e1" stroke="#94a3b8" stroke-width="1"
-          data-name="Tibia (Sağ)" data-lat="Tibia" data-sys="İskelet / Alt Ekstremite" 
-          data-func="Vücut ağırlığının büyük kısmını dizden ayak bileğine aktarır." 
-          data-conn="Femur, Fibula, Talus" 
-          data-desc="Vücudun en kalın ikinci kemiğidir. İç yan tarafta yer alır ve medial malleolü (iç bilek çıkıntısı) oluşturur." />
-
-    <path class="anatomy-clickable bone-part" 
-          d="M468,828 l5,135 q1,10 -8,10 t-10,-10 l-2,-135 z" 
-          fill="#94a3b8" stroke="#64748b" stroke-width="1"
-          data-name="Fibula (Sağ)" data-lat="Fibula" data-sys="İskelet" 
-          data-func="Kas tutunma alanı sağlar ve ayak bileği eklemini dıştan stabilize eder." 
-          data-conn="Tibia, Talus" 
-          data-desc="İnce bir kemiktir, yük taşıma görevi azdır ancak bilek stabilitesi için kritiktir." />
-
-    <path class="anatomy-clickable bone-part" 
-          d="M348,825 l-8,140 q-2,15 10,15 t15,-10 l10,-145 z" 
-          fill="#cbd5e1" stroke="#94a3b8" stroke-width="1"
-          data-name="Tibia (Sol)" data-lat="Tibia" data-sys="İskelet" 
-          data-func="Ağırlık aktarımı ve destek." 
-          data-conn="Femur, Fibula, Talus" data-desc="Simetrik kaval kemiği." />
-
-    <path class="anatomy-clickable bone-part" 
-          d="M332,828 l-5,135 q-1,10 8,10 t10,-10 l2,-135 z" 
-          fill="#94a3b8" stroke="#64748b" stroke-width="1"
-          data-name="Fibula (Sol)" data-lat="Fibula" data-sys="İskelet" 
-          data-func="Dış bilek (Lateral Malleol) oluşumu." 
-          data-conn="Tibia, Talus" data-desc="Simetrik kamış kemiği." />
-
-    <path class="anatomy-clickable bone-part" 
-          d="M445,980 l30,15 l15,0 l5,10 l-60,5 z" 
-          fill="#f1f5f9" stroke="#94a3b8" stroke-width="1"
-          data-name="Ayak Kemikleri (Sağ)" data-lat="Ossa Pedis" data-sys="İskelet / Ayak" 
-          data-func="Denge, şok emilimi ve itme gücü (yürüme) sağlar." 
-          data-conn="Tibia, Fibula" 
-          data-desc="Tarsal, metatarsal ve falankslardan oluşan 26 kemikli kompleks bir yapıdır." />
-
-    <path class="anatomy-clickable bone-part" 
-          d="M355,980 l-30,15 l-15,0 l-5,10 l60,5 z" 
-          fill="#f1f5f9" stroke="#94a3b8" stroke-width="1"
-          data-name="Ayak Kemikleri (Sol)" data-lat="Ossa Pedis" data-sys="İskelet" 
-          data-func="Vücut dengesi ve lokomosyon." 
-          data-conn="Tibia, Fibula" data-desc="Boyuna ve enine kavisleri (arklar) sayesinde ağırlığı dağıtır." />
-      </g>
-    
